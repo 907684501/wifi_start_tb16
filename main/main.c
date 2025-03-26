@@ -128,6 +128,9 @@ void app_main(void)
 
     lvgl_port_unlock();
 
+    init_spiffs();
+    load_ttf_font();
+
     for (;;)
     {
         vTaskDelay(5000);
