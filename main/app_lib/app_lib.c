@@ -460,14 +460,68 @@ void init_spiffs(void)
 
 void load_ttf_font(void)
 {
-    // 从 TinyTTF 创建 LVGL 字体
-    ttf_font = lv_tiny_ttf_create_file("/storage/font1.ttf", 28); // 字体大小为 28
+    // 从SPIFFS加载字体文件
 
-    if (!ttf_font)
+    uint8_t *font_data = NULL;
+
+    size_t font_size = read_file_from_spiffs("/storage/font1.ttf", &font_data);
+
+    if (font_size == 0)
     {
-        printf("Failed to create LVGL font from Tiny TTF\n");
+        printf("Failed to load font file\n");
+        return;
+    }
+    else
+    {
+        printf("Font size: %d\n", font_size);
+    }
+
+    // 初始化TinyTTF
+    ttf_font = lv_tiny_ttf_create_data(font_data, font_size, 24);
+
+    if (ttf_font != 0)
+    {
+        printf("Failed to parse font\n");
+        free(font_data);
         return;
     }
 
-    printf("Tiny TTF font loaded successfully\n");
+    printf("Font loaded successfully!\n");
+}
+
+// 从SPIFFS读取文件的函数
+size_t read_file_from_spiffs(const char *path, uint8_t **buffer)
+{
+    FILE *file = fopen(path, "rb");
+
+    if (!file)
+    {
+        printf("Failed to open file: %s", path);
+        return 0;
+    }
+
+    fseek(file, 0, SEEK_END);
+    size_t size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    *buffer = malloc(size);
+
+    if (!*buffer)
+    {
+        fclose(file);
+        printf("Failed to allocate memory for file\n");
+        return 0;
+    }
+
+    size_t read = fread(*buffer, 1, size, file);
+    fclose(file);
+
+    if (read != size)
+    {
+        free(*buffer);
+        printf("Failed to read entire file\n");
+        return 0;
+    }
+
+    return size;
 }
