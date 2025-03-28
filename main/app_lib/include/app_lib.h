@@ -11,4 +11,3 @@ void app_main_display(void);
 void app_lvgl_test(void);
 void init_spiffs(void);
 void load_ttf_font(void);
-size_t read_file_from_spiffs(const char *path, uint8_t **buffer);

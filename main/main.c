@@ -122,10 +122,10 @@ void app_main(void)
     lvgl_port_lock(0);
 
     //app_main_display();
-    // app_lvgl_test();
+    app_lvgl_test();
     // lv_demo_music();
     // lv_demo_stress();
-     lv_demo_widgets();
+    // lv_demo_widgets();
 
     lvgl_port_unlock();
 

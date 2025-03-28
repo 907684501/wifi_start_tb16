@@ -280,32 +280,17 @@ static void slider_event_cb(lv_event_t *e)
 
 void app_lvgl_test(void)
 {
-    lv_obj_t *src = lv_scr_act();
-
     static lv_style_t style;
     lv_style_init(&style);
-    lv_style_set_bg_color(&style, lv_color_hex(0x000055));
-    lv_style_set_text_color(&style, lv_color_hex(0xFFFFFF));
-    lv_style_set_text_font(&style, &lv_font_montserrat_32);
-    lv_obj_add_style(src, &style, 0);
+    // lv_font_t * font = lv_tiny_ttf_create_data(ubuntu_font, ubuntu_font_size, 30);
+    lv_style_set_text_font(&style, &lv_font_montserrat_38);
+    lv_style_set_text_align(&style, LV_TEXT_ALIGN_CENTER);
 
-    lv_obj_t *slider = lv_slider_create(lv_scr_act());
-    lv_obj_set_width(slider, 200);
-    lv_obj_center(slider);
-    lv_obj_add_event_cb(slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-
-    label = lv_label_create(lv_scr_act());
-    lv_label_set_text(label, "0");
-    lv_obj_align_to(label, slider, LV_ALIGN_OUT_TOP_MID, 0, -50);
-
-    lv_obj_t *label1 = lv_label_create(src);
-    uint8_t major = lv_version_major();
-    uint8_t minor = lv_version_minor();
-    uint8_t patch = lv_version_patch();
-    char version_str[16];
-    snprintf(version_str, sizeof(version_str), "ver:%d.%d.%d", major, minor, patch);
-    lv_label_set_text(label1, version_str);
-    lv_obj_align(label1, LV_ALIGN_BOTTOM_MID, 0, -10);
+    /*Create a label with the new style*/
+    lv_obj_t *label = lv_label_create(lv_scr_act());
+    lv_obj_add_style(label, &style, 0);
+    lv_label_set_text(label, "Hello world\nI'm a font\ncreated\nwith Tiny TTF");
+    lv_obj_center(label);
 }
 
 void app_main_display(void)
@@ -464,7 +449,42 @@ void load_ttf_font(void)
 
     uint8_t *font_data = NULL;
 
-    size_t font_size = read_file_from_spiffs("/storage/font1.ttf", &font_data);
+    size_t font_size;
+
+    const char *path = "/storage/font1.ttf";
+
+    FILE *file = fopen(path, "rb");
+
+    if (!file)
+    {
+        printf("Failed to open file: %s", path);
+        return;
+    }
+
+    fseek(file, 0, SEEK_END);
+    size_t size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    font_data = (uint8_t *)malloc(size);
+
+    if (font_data == NULL)
+    {
+        fclose(file);
+        printf("Failed to allocate memory for file\n");
+        return;
+    }
+
+    size_t read = fread(font_data, 1, size, file);
+    fclose(file);
+
+    if (read != size)
+    {
+        free(font_data);
+        printf("Failed to read entire file\n");
+        return;
+    }
+
+    font_size = read;
 
     if (font_size == 0)
     {
@@ -479,7 +499,7 @@ void load_ttf_font(void)
     // 初始化TinyTTF
     ttf_font = lv_tiny_ttf_create_data(font_data, font_size, 24);
 
-    if (ttf_font != 0)
+    if (ttf_font == NULL)
     {
         printf("Failed to parse font\n");
         free(font_data);
@@ -487,41 +507,4 @@ void load_ttf_font(void)
     }
 
     printf("Font loaded successfully!\n");
-}
-
-// 从SPIFFS读取文件的函数
-size_t read_file_from_spiffs(const char *path, uint8_t **buffer)
-{
-    FILE *file = fopen(path, "rb");
-
-    if (!file)
-    {
-        printf("Failed to open file: %s", path);
-        return 0;
-    }
-
-    fseek(file, 0, SEEK_END);
-    size_t size = ftell(file);
-    fseek(file, 0, SEEK_SET);
-
-    *buffer = malloc(size);
-
-    if (!*buffer)
-    {
-        fclose(file);
-        printf("Failed to allocate memory for file\n");
-        return 0;
-    }
-
-    size_t read = fread(*buffer, 1, size, file);
-    fclose(file);
-
-    if (read != size)
-    {
-        free(*buffer);
-        printf("Failed to read entire file\n");
-        return 0;
-    }
-
-    return size;
 }
